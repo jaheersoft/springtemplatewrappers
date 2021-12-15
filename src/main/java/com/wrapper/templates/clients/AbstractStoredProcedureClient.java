@@ -26,8 +26,11 @@ import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.support.AbstractSqlTypeValue;
 import org.springframework.jdbc.core.support.SqlLobValue;
 import com.wrapper.templates.callers.SQLDatabaseCaller;
-import com.wrapper.templates.exceptions.IncompleteExternalCallOutputException;
+import com.wrapper.templates.exceptions.ApplicationException;
+import com.wrapper.templates.exceptions.FaultError;
 import com.wrapper.templates.utilities.Dates;
+import static com.wrapper.templates.exceptions.ErrorType.*;
+import static com.wrapper.templates.exceptions.Process.*;
 
 public abstract class AbstractStoredProcedureClient<R> {
 	
@@ -181,12 +184,12 @@ public abstract class AbstractStoredProcedureClient<R> {
 		return this;
 	}
 	
-	public AbstractStoredProcedureClient<R> call() throws IncompleteExternalCallOutputException {
+	public AbstractStoredProcedureClient<R> call() throws ApplicationException,FaultError {
+		results = caller().executeStoredProcedure(packageName(), storedProcedureName(), outputParameters(), inputParameters(), arguments());
 		try {
-			results = caller().executeStoredProcedure(packageName(), storedProcedureName(), outputParameters(), inputParameters(), arguments());
 			response = handleResults(results);
 		} catch(Exception e) {
-			throw new IncompleteExternalCallOutputException.Builder(e).build();
+			throw new ApplicationException.Builder(e).the(STOREDPROC_ERROR).occurredWhile(BUILDING_HEADERS).build();
 		}
 		return this;
 	}

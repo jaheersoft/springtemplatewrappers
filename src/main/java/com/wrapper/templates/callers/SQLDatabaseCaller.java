@@ -1,6 +1,5 @@
 package com.wrapper.templates.callers;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +11,8 @@ import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.object.StoredProcedure;
 import org.springframework.stereotype.Component;
 import com.wrapper.templates.exceptions.FaultError;
-import com.wrapper.templates.exceptions.FaultError.ErrorType;
+import static com.wrapper.templates.exceptions.ErrorType.*;
+import static com.wrapper.templates.exceptions.Process.*;
 
 @Component
 public class SQLDatabaseCaller {
@@ -21,41 +21,41 @@ public class SQLDatabaseCaller {
 	private JdbcTemplate template;
 
 	public <R> List<R> executeSQLQuery(String fullyFormedQuery, RowMapper<R> rowMapper)
-			throws FaultError, SQLException {
+			throws FaultError {
 		try {
 			return template.query(fullyFormedQuery, rowMapper);
 		} catch (Exception e) {
-			throw new FaultError.Builder(e).theError(ErrorType.SQLQUERY_ERROR).withOccurredWhileCalling(template.getDataSource().getConnection().getSchema()).build();
+			throw new FaultError.Builder(e).the(SQLQUERY_ERROR).occurredWhile(EXECUTING_SQLQUERY).build();
 		}
 	}
 
-	public <R> R executeSQLQuery(String fullyFormedQuery, Class<R> className) throws FaultError, SQLException {
+	public <R> R executeSQLQuery(String fullyFormedQuery, Class<R> className) throws FaultError {
 		try {
 			return template.queryForObject(fullyFormedQuery, className);
 		} catch (Exception e) {
-			throw new FaultError.Builder(e).theError(ErrorType.SQLQUERY_ERROR).withOccurredWhileCalling(template.getDataSource().getConnection().getSchema()).build();
+			throw new FaultError.Builder(e).the(SQLQUERY_ERROR).occurredWhile(EXECUTING_SQLQUERY).build();
 		}
 	}
 
 	public <R> R executeSQLQuery(String fullyFormedQuery, ResultSetExtractor<R> extractor)
-			throws FaultError, SQLException {
+			throws FaultError {
 		try {
 			return template.query(fullyFormedQuery, extractor);
 		} catch (Exception e) {
-			throw new FaultError.Builder(e).theError(ErrorType.SQLQUERY_ERROR).withOccurredWhileCalling(template.getDataSource().getConnection().getSchema()).build();
+			throw new FaultError.Builder(e).the(SQLQUERY_ERROR).occurredWhile(EXECUTING_SQLQUERY).build();
 		}
 	}
 
 	public Map<String, Object> executeStoredProcedure(String packageName, String storedProcName,
 			List<SqlOutParameter> outputParameters, List<SqlParameter> inputParameters, Map<String, ?> inputs)
-			throws FaultError, SQLException {
+			throws FaultError {
 		return new StoredProcedureCaller().call(packageName, storedProcName, outputParameters, inputParameters, inputs);
 	}
 
 	private final class StoredProcedureCaller extends StoredProcedure {
 		public Map<String, Object> call(String packageName, String storedProcName,
 				List<SqlOutParameter> outputParameters, List<SqlParameter> inputParameters, Map<String, ?> inputs)
-				throws FaultError, SQLException {
+				throws FaultError {
 			try {
 				setJdbcTemplate(template);
 				setSql(packageName + storedProcName);
@@ -64,7 +64,7 @@ public class SQLDatabaseCaller {
 				compile();
 				return super.execute(inputs);
 			} catch (Exception e) {
-				throw new FaultError.Builder(e).theError(ErrorType.STOREDPROC_ERROR).withOccurredWhileCalling(template.getDataSource().getConnection().getSchema()).build();
+				throw new FaultError.Builder(e).the(STOREDPROC_ERROR).occurredWhile(EXECUTING_PROCEDURE).build();
 			}
 		}
 	}

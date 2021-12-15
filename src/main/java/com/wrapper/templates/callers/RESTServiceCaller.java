@@ -6,8 +6,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import static com.wrapper.templates.exceptions.ErrorType.*;
 import com.wrapper.templates.exceptions.FaultError;
-import com.wrapper.templates.exceptions.FaultError.ErrorType;
+import static com.wrapper.templates.exceptions.Process.*;
 
 @Component
 public class RESTServiceCaller {
@@ -21,12 +22,12 @@ public class RESTServiceCaller {
 		try {
 			responseEntity = this.template.exchange(serviceCallURL, httpMethod, httpEntity, responseClass);
 		} catch (Exception e) {
-			throw new FaultError.Builder(e).theError(ErrorType.REST_ERROR).withOccurredWhileCalling(serviceCallURL).build();
+			throw new FaultError.Builder(e).the(REST_ERROR).occurredWhile(CALLING_SERVICE).build();
 		} finally {
 
 		}
 		if (responseEntity == null) {
-			throw new FaultError.Builder("Null response").theError(ErrorType.REST_ERROR).withOccurredWhileCalling(serviceCallURL).build();
+			throw new FaultError.Builder("Null response").the(REST_ERROR).occurredWhile(CALLING_SERVICE).build();
 		}
 		return responseEntity;
 	}

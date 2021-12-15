@@ -4,38 +4,20 @@ package com.wrapper.templates.exceptions;
 public class FaultError extends Exception {
 
 	private final String message;
-
-	public enum ErrorType {
-		JMS_ERROR("but posting message to destination "),
-		REST_ERROR("but calling resource "),
-		SOAP_ERROR("but calling operation "),
-		STOREDPROC_ERROR("but executing stored proc on "),
-		SQLQUERY_ERROR("but executing sql query on "),
-		NO_SQL_ERROR("but executing no sql query on ");
-
-		private final String errorTypeMessage;
-
-		ErrorType(String errorTypeMessage) {
-			this.errorTypeMessage = errorTypeMessage;
-		}
-
-		public String getErrorTypeMessage() {
-			return this.errorTypeMessage;
-		}
-	}
-
 	private final ErrorType errorType;
 	private final String serviceCalledURL;
 	private final String destinationName;
 	private final Throwable exception;
 	private final String consumerMessage;
+	private Process process;
 	
 	public static class Builder {
-		private ErrorType theError;
-		private String occurredWhileCalling;
+		private ErrorType the;
+		private String calling;
 		private Throwable withException;
 		private String withMessageFromConsumer;
 		private String toDestination;
+		private Process occurredWhile;
 		
 		public Builder(Throwable withException) {
 			this.withException = withException;
@@ -62,48 +44,60 @@ public class FaultError extends Exception {
 			return this;
 		}
 
-		public ErrorType getTheError() {
-			return theError;
+		public ErrorType getThe() {
+			return the;
 		}
 
-		public Builder theError(ErrorType theError) {
-			this.theError = theError;
+		public Builder the(ErrorType the) {
+			this.the = the;
 			return this;
 		}
 
-		public String getOccurredWhileCalling() {
-			return occurredWhileCalling;
+		public String getCalling() {
+			return calling;
 		}
 
-		public Builder withOccurredWhileCalling(String occurredWhileCalling) {
-			this.occurredWhileCalling = occurredWhileCalling;
+		public Builder calling(String calling) {
+			this.calling = calling;
 			return this;
 		}
 
+		public Process getOccurredWhile() {
+			return occurredWhile;
+		}
+		
+		public Builder occurredWhile(Process occurredWhile) {
+			this.occurredWhile = occurredWhile;
+			return this;
+		}
+		
 		public FaultError build() {
 			return new FaultError(this);
 		}
 	}
 
 	public FaultError(Builder builder) {
-		errorType = builder.getTheError();
-		serviceCalledURL = builder.getOccurredWhileCalling();
+		errorType = builder.getThe();
+		process = builder.getOccurredWhile();
 		exception = builder.getWithException();
 		consumerMessage = builder.getWithMessageFromConsumer();
 		destinationName = builder.getToDestination();
+		serviceCalledURL = builder.getCalling();
 		StringBuilder sb = new StringBuilder();
 		sb.append(errorType.getErrorTypeMessage());
-		if(ErrorType.JMS_ERROR.equals(errorType)) {
+		sb.append(process.getProcessErrorMessage());
+		/*if(ErrorType.JMS_ERROR.equals(errorType)) {
 			sb.append(destinationName);
 		} else {
 			sb.append(serviceCalledURL);
 		}
-		sb.append(" failed with exception :");
+		sb.append(" failed with exception :");*/
 		if(exception != null) {
 			sb.append(exception.getMessage());
 		} else {
 			sb.append(consumerMessage);
 		}
+		sb.append("we can't continue with this issue.");;
 		message = sb.toString();
 	}
 
@@ -129,5 +123,9 @@ public class FaultError extends Exception {
 
 	public String consumerMessage() {
 		return consumerMessage;
+	}
+	
+	public Process process() {
+		return process;
 	}
 }

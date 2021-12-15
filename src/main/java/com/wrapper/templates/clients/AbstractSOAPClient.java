@@ -4,8 +4,10 @@ import java.util.Map;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import com.wrapper.templates.Inputs;
 import com.wrapper.templates.callers.SOAPServiceCaller;
-import com.wrapper.templates.exceptions.IncompleteExternalCallOutputException;
-import com.wrapper.templates.exceptions.IncompleteExternalCallOutputException.Process;
+import com.wrapper.templates.exceptions.ApplicationException;
+import com.wrapper.templates.exceptions.FaultError;
+import static com.wrapper.templates.exceptions.ErrorType.*;
+import static com.wrapper.templates.exceptions.Process.*;
 
 public abstract class AbstractSOAPClient<R> {
 
@@ -92,32 +94,24 @@ public abstract class AbstractSOAPClient<R> {
 		return headers;
 	}
 
-	public <Q> AbstractSOAPClient<R> call() throws IncompleteExternalCallOutputException {
+	public <Q> AbstractSOAPClient<R> call() throws ApplicationException,FaultError {
 		Q request = null;
 		try {
 			this.url = resourceURL(externalAPIURI(), inputs().getPayloads());
 		} catch (Exception e) {
-			throw new IncompleteExternalCallOutputException.Builder(e).occurredWhile(Process.BUILDING_URL)
-					.forExternalAPIURL(externalAPIURI()).withInputs(inputs()).build();
+			throw new ApplicationException.Builder(e).the(SOAP_ERROR).occurredWhile(BUILDING_URL).build();
 		}
 		try {
 			request = buildPayload(inputs().getPayloads());
 		} catch (Exception e) {
-			throw new IncompleteExternalCallOutputException.Builder(e).occurredWhile(Process.BUILDING_REQUEST)
-					.forExternalAPIURL(externalAPIURI()).withInputs(inputs()).build();
+			throw new ApplicationException.Builder(e).the(SOAP_ERROR).occurredWhile(BUILDING_REQUEST).build();
 		}
 		try {
 			headers = headers(inputs().getHeaders());
 		} catch (Exception e) {
-			throw new IncompleteExternalCallOutputException.Builder(e).occurredWhile(Process.BUILDING_HEADERS)
-					.forExternalAPIURL(externalAPIURI()).withInputs(inputs()).build();
+			throw new ApplicationException.Builder(e).the(SOAP_ERROR).occurredWhile(BUILDING_HEADERS).build();
 		}
-		try {
-			this.response = caller().callService(url(), marshaller(), headers(), request);
-		} catch (Exception e) {
-			throw new IncompleteExternalCallOutputException.Builder(e).occurredWhile(Process.CALLING_SERVICE)
-					.forExternalAPIURL(externalAPIURI()).withInputs(inputs()).build();
-		}
+		this.response = caller().callService(url(), marshaller(), headers(), request);
 		return this;
 	}
 

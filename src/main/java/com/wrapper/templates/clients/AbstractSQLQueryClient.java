@@ -4,7 +4,8 @@ import java.util.List;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import com.wrapper.templates.callers.SQLDatabaseCaller;
-import com.wrapper.templates.exceptions.IncompleteExternalCallOutputException;
+import com.wrapper.templates.exceptions.ApplicationException;
+import com.wrapper.templates.exceptions.FaultError;
 
 public abstract class AbstractSQLQueryClient<R> {
 
@@ -53,19 +54,15 @@ public abstract class AbstractSQLQueryClient<R> {
 		return this;
 	}
 
-	public AbstractSQLQueryClient<R> execute() throws IncompleteExternalCallOutputException {
-		try {
-			if (className != null) {
-				response = caller().executeSQLQuery(query, className);
-			}
-			if (rowMapper != null) {
-				responses = caller().executeSQLQuery(query, rowMapper);
-			}
-			if (extractor != null) {
-				response = caller().executeSQLQuery(query, extractor);
-			}
-		} catch (Exception e) {
-			throw new IncompleteExternalCallOutputException.Builder(e).build();
+	public AbstractSQLQueryClient<R> execute() throws ApplicationException,FaultError {
+		if (className != null) {
+			response = caller().executeSQLQuery(query, className);
+		}
+		if (rowMapper != null) {
+			responses = caller().executeSQLQuery(query, rowMapper);
+		}
+		if (extractor != null) {
+			response = caller().executeSQLQuery(query, extractor);
 		}
 		return this;
 	}
